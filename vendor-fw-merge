@@ -19,7 +19,7 @@ wget "${URL}"
 unzip "${ZIP}"
 
 # Unpack the payload
-python "${HOME}"/bin/extract_android_ota_payload.py payload.bin
+python "${HOME}"/bin/tools/extract_android_ota_payload.py payload.bin
 
 # Clear out the stuff we don't want
 rm ${ZIP} && rm *.bin && rm *.pb && rm boot.img && rm system.img && rm vendor.img && rm *.txt && rm -Rf META-INF && rm dtbo.img && rm vbmeta* && rm product.img && rm system_ext.img
