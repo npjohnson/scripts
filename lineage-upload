@@ -1,0 +1,6 @@
+#!/bin/bash
+#
+
+/usr/bin/python3 /var/www/builds_publisher/publish_builds.py /var/www/builds_publisher/prod_config.json
+sudo /bin/systemctl restart updater-prod.service
+

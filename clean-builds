@@ -1,0 +1,3 @@
+rm /var/www/ods.ninja/html/BuildServer/Android/lineage/*/lineage-*
+lineage-index
+echo "Builds successfully cleaned!"

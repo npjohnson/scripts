@@ -1,0 +1,2 @@
+#!/bin/bash
+github-remove-all-releases ods-releases "${1}" -t "${ODS_GITHUB_TOKEN}"

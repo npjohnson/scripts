@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+
+URL=${1}
+ZIP=$(basename "${URL}")
+BUILD_ID=$(echo "${ZIP}" | awk -F- '{print $3}')
+DEVICE=$(echo "${ZIP}" | awk -F- '{print $1}')
+
+# Make the tmp directory
+mkdir -p "${HOME}/tmp/${DEVICE}-images"
+
+# Change the tmp directory
+cd "${HOME}/tmp/${DEVICE}-images" || exit
+
+# Download input package
+wget "${URL}"
+
+# Unzip package
+unzip "${ZIP}"
+
+# Unpack the payload
+python "${HOME}"/bin/extract_android_ota_payload.py payload.bin
+
+# Clear out the stuff we don't want
+rm ${ZIP} && rm *.bin && rm *.pb && rm boot.img && rm system.img && rm vendor.img && rm *.txt && rm -Rf META-INF && rm dtbo.img && rm vbmeta* && rm product.img && rm system_ext.img
+
+# Make the folders in vendor/fimrware
+mkdir -p "${HOME}"/lineage-18/vendor/firmware/"${DEVICE}"
+
+# Move images to vendor/firmware
+mv * "${HOME}"/lineage-18/vendor/firmware/"${DEVICE}"/radio/
+
+# Change to vendor/firmware directory
+cd "${HOME}"/lineage-18/vendor/firmware/ || exit
+
+# Add new image to git index
+git add *
+
+# Commit firmware changes
+git commit -a -m "${DEVICE}: Import from ${BUILD_ID}"
+
+# Delete the temporary directory
+rm -Rf "${HOME}/tmp/${DEVICE}-images"
+
+# Change directory back to home
+cd "${HOME}" || exit

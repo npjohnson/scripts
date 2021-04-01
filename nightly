@@ -1,0 +1,184 @@
+#!/bin/bash
+#
+
+export WITH_GMS_MINIMAL=false
+export WITH_GMS=true
+
+lineage-build 18 gts4lvwifi sync clean
+
+lineage-upload
+
+lineage-build 18 coral
+
+lineage-upload
+
+lineage-build 18 sargo
+
+lineage-upload
+
+lineage-build 18 TP1803
+
+lineage-upload
+
+lineage-build 18 cheryl nosync clean
+
+lineage-upload
+
+lineage-build 18 pro1
+
+lineage-upload
+
+lineage-build 18 nash
+
+lineage-upload
+
+lineage-build 18 mata
+
+lineage-upload
+
+lineage-build 18 lake
+
+lineage-upload
+
+lineage-build 18 PL2
+
+lineage-upload
+
+export WITH_GMS_MINIMAL=true
+lineage-build 18 sailfish nosync clean
+
+lineage-upload
+export WITH_GMS_MINIMAL=false
+
+lineage-build 18 river
+
+lineage-upload
+
+lineage-build 18 h918
+
+lineage-upload
+
+lineage-build 18 ether
+
+lineage-upload
+
+lineage-build 18 shamu nosync clean
+
+lineage-upload
+
+lineage-build 18 klteactivexx
+
+lineage-upload
+
+lineage-build 18 hltetmo
+
+lineage-upload
+
+export WITH_GMS_MINIMAL=true
+lineage-build 18 bacon
+
+lineage-upload
+export WITH_GMS_MINIMAL=false
+
+lineage-build 18 m8
+
+lineage-upload
+
+lineage-build 18 jfltevzw
+
+lineage-upload
+
+export WITH_GMS_MINIMAL=true
+lineage-build 18 flox
+
+lineage-upload
+export WITH_GMS_MINIMAL=false
+
+LAST_BUILD=true lineage-build 18 arm64
+
+lineage-upload
+
+lineage-build 17 aura sync clean
+
+lineage-upload
+
+LAST_BUILD=true lineage-build 17 victara
+
+lineage-upload
+
+lineage-build 16 yellowstone sync clean
+
+lineage-upload
+
+lineage-build 16 berkeley
+
+lineage-upload
+
+export WITH_GMS=false
+lineage-build 16 shieldtablet
+
+lineage-upload
+
+LAST_BUILD=true lineage-build 16 foster
+
+lineage-upload
+export WITH_GMS=true
+
+LAST_BUILD=true lineage-build 15 fugu sync clean
+
+lineage-upload
+
+lineage-build 18 flame sync clean
+lineage-build 18 bonito
+lineage-build 18 gts4lv
+lineage-build 18 payton nosync clean
+lineage-build 18 beckham
+lineage-build 18 evert
+lineage-build 18 chef
+export WITH_GMS_MINIMAL=true
+lineage-build 18 marlin
+export WITH_GMS_MINIMAL=false
+lineage-build 18 h990 nosync clean
+lineage-build 18 h830
+lineage-build 18 h850
+lineage-build 18 h910
+lineage-build 18 ls997 nosync clean
+lineage-build 18 rs988
+lineage-build 18 us996
+lineage-build 18 vs995
+lineage-build 18 hlte nosync clean
+lineage-build 18 hltekor
+lineage-build 18 hltechn
+lineage-build 18 klte nosync clean
+lineage-build 18 kltechn
+lineage-build 18 kltechnduo
+lineage-build 18 klteduos
+lineage-build 18 kltedv
+lineage-build 18 kltekdi
+lineage-build 18 kltekor
+lineage-build 18 jfltexx nosync clean
+lineage-build 18 jfltespr
+lineage-build 18 jflteatt
+lineage-build 18 jactivelte
+lineage-build 18 jfvelte
+lineage-build 18 m8d
+lineage-build 18 arm
+lineage-build 18 x86
+lineage-build 18 x86_64
+lineage-build 18 arm_ab
+lineage-build 18 arm64_ab
+lineage-build 18 x86_ab
+lineage-build 18 x86_64_ab
+lineage-build 18 tv_arm
+lineage-build 18 tv_arm64
+lineage-build 18 tv_x86
+LAST_BUILD=true lineage-build 18 tv_x86_64
+
+LAST_BUILD=true lineage-build 16 charlotte
+
+lineage-upload
+
+sync-all
+
+cd "${HOME}"
+echo "Nightly Builds Done!"

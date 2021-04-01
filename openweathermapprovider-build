@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# Arguements
+# 1: Lineage Version - Supported: 15, 16
+#
+
+VERSION=${1}
+
+# Set the subversion respective to the chose version
+if [ "${VERSION}" == "14" ] || [ "${VERSION}" == "15" ]
+then
+  export SUBVERSION="1"
+elif [ "${VERSION}" == "13" ] || [ "${VERSION}" == "16" ]
+then
+  export SUBVERSION="0"
+fi
+
+# Change these for your needs to build locally
+PATH_TO_CERTS=${HOME}/lineage-${VERSION}/vendor/certs/
+
+cd "${HOME}"/lineage-"${VERSION}" || exit
+source "build/envsetup.sh"
+cd "${HOME}"/lineage-"${VERSION}"/packages/apps/OpenWeatherMapProvider/ || exit
+# Change this to reflect your Android SDK path, too
+echo sdk.dir=/home/nolenjohnson/.sdk>local.properties
+./gradlew build
+apksigner sign --cert "${PATH_TO_CERTS}"/releasekey.x509.pem --key "${PATH_TO_CERTS}"/releasekey.pk8 "${HOME}"/lineage-"${VERSION}"/packages/apps/OpenWeatherMapProvider/app/build/outputs/apk/release/app-release-unsigned.apk
+mv "${HOME}"/lineage-"${VERSION}"/packages/apps/OpenWeatherMapProvider/app/build/outputs/apk/release/app-release-unsigned.apk /var/www/ods.ninja/html/BuildServer/Android/lineage/addons/weatherproviders/OpenWeatherMapWeatherProvider-"${VERSION}"."${SUBVERSION}"-signed.apk
+./gradlew clean
+cd ${HOME} || exit
+
+echo "WeatherProvider built successfully for LineageOS ${VERSION}.${SUBVERSION}"

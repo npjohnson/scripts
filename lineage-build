@@ -1,0 +1,304 @@
+#!/bin/bash
+
+# -----
+# Usage
+# -----
+# $ lineage-build <version> <device> <sync> <clean>
+
+
+# --------
+# Examples
+# --------
+# $ lineage-build 16 nash
+# $ lineage-build 17 crosshatch sync clean
+
+
+# ----------
+# Parameters
+# ----------
+# Parameter 1: version (eg. 11-17)
+# Parameter 2: device (eg. crosshatch, nash, shamu)
+# Parameter 3: sync or nosync
+# Parameter 4: (pre build) clean or dirty (clobbers or doesn't)
+
+VERSION=${1}
+DEVICE=${2}
+SYNC=${3}
+PRECLEAN=${4}
+
+# ---------
+# Variables
+# ---------
+SOURCEDIR=${HOME}/lineage-${VERSION}
+OUTDIR=${OUT_DIR_COMMON_BASE}/lineage-${VERSION}/target/product/${DEVICE}
+UPDATERDIR=/var/www/ods.ninja/html/BuildServer/Android/lineage/${DEVICE}
+
+if [ "${VERSION}" == "12" ] || [ "${VERSION}" == "14" ] || [ "${VERSION}" == "15" ] || [ "${VERSION}" == "17" ] || [ "${VERSION}" == "18" ]
+ then
+  SUBVERSION=1
+ else
+  SUBVERSION=0
+fi
+
+if [ "${VERSION}" -le "13" ]
+ then
+  ROMPREFIX=cm
+ else
+  ROMPREFIX=lineage
+fi
+
+# Copy manifests/picklists
+for version in 15 16 17 18
+do
+  cp ~/lineage-"${version}"/pick-"${version}".sh /var/www/ods.ninja/html/BuildServer/Android/lineage/manifests/pick-"${version}".sh
+  cp ~/lineage-"${version}"/.repo/local_manifests/npjohnson-"${version}".xml /var/www/ods.ninja/html/BuildServer/Android/lineage/manifests/npjohnson-"${version}".xml
+done
+
+echo "Lists Updated!"
+
+ROM="LineageOS ${VERSION}.${SUBVERSION}"
+
+# ------
+# Colors
+# ------
+BLDRED="\033[1m""\033[31m"
+RST="\033[0m"
+
+
+# Clear the terminal
+clear
+
+
+# Start tracking time
+echo -e "${BLDRED}"
+echo -e "---------------------------------------"
+echo -e "SCRIPT STARTING AT $(date +%D\ %r)"
+echo -e "---------------------------------------"
+echo -e "${RST}"
+
+
+# Change to the source directory
+echo -e "${BLDRED}"
+echo -e "------------------------------------"
+echo -e "CHANGING TO ${SOURCEDIR} DIRECTORY"
+echo -e "------------------------------------"
+echo -e "${RST}"
+
+cd "${SOURCEDIR}" || exit
+
+# Sync the repo
+echo -e "${BLDRED}"
+echo -e "----------------------"
+echo -e "SYNCING LATEST SOURCES"
+echo -e "----------------------"
+echo -e "${RST}"
+echo -e ""
+
+if [ "${SYNC}" == sync ]
+  then
+    repo sync --force-sync
+
+    if [ "$(find "${SOURCEDIR}"/pick-"${VERSION}".sh 2>/dev/null | wc -l)" != "0" ]
+      then
+        # Picking requested changes
+        echo -e "${BLDRED}"
+        echo -e "----------------------"
+        echo -e "PICKING REQUESTED CHANGES"
+        echo -e "----------------------"
+        echo -e "${RST}"
+        echo -e ""
+
+        bash "${SOURCEDIR}"/pick-"${VERSION}".sh
+    fi
+fi
+
+# Setup the build environment
+echo -e "${BLDRED}"
+echo -e "----------------------------"
+echo -e "SETTING UP BUILD ENVIRONMENT"
+echo -e "----------------------------"
+echo -e "${RST}"
+echo -e ""
+
+source "build/envsetup.sh"
+
+# Prepare device
+echo -e "${BLDRED}"
+echo -e "----------------"
+echo -e "PREPARING DEVICE"
+echo -e "----------------"
+echo -e "${RST}"
+echo -e ""
+
+lunch "${ROMPREFIX}"_"${DEVICE}"-userdebug
+
+# Clobber the repo if requested
+if [ "${PRECLEAN}" == "clean" ]
+   then
+      echo -e "${BLDRED}"
+      echo -e "------------------------------------------"
+      echo -e "CLEANING UP ${SOURCEDIR}/out"
+      echo -e "------------------------------------------"
+      echo -e "${RST}"
+
+      mka clobber
+fi
+
+# Start building
+echo -e "${BLDRED}"
+echo -e "---------------"
+echo -e "BUILDING ROM"
+echo -e "---------------"
+echo -e "${RST}"
+echo -e ""
+
+# Set start time
+START=$(date +%s)
+
+# Export the COMPILE_LOG variable for other files to use
+export COMPILE_LOG=${LOGDIR}/compile_log_$(date +%m_%d_%y).log
+
+if [ "${DEVICE}" == "arm" ] || [ "${DEVICE}" == "arm64" ] || [ "${DEVICE}" == "x86" ] || [ "${DEVICE}" == "x86_64" ] || [ "${DEVICE}" == "tv_arm" ] || [ "${DEVICE}" == "tv_arm64" ] || [ "${DEVICE}" == "tv_x86" ] || [ "${DEVICE}" == "tv_x86_64" ] || [ "${DEVICE}" == "arm_ab" ] || [ "${DEVICE}" == "arm64_ab" ] || [ "${DEVICE}" == "x86_ab" ] || [ "${DEVICE}" == "x86_64_ab" ]
+then
+   time mka systemimage
+else
+   time mka bacon
+fi
+
+# If the above was successful
+if [ "$(find "${OUTDIR}"/lineage-"${VERSION}"."${SUBVERSION}"-*-*-"${DEVICE}".zip 2>/dev/null | wc -l)" != "0" ] || [ "$(find "${OUT_DIR_COMMON_BASE}"/lineage-"${VERSION}"/target/product/generic*/system.img 2>/dev/null | wc -l)" != "0" ]
+then
+   BUILD_RESULT_STRING="BUILD SUCCESSFUL"
+   # Stop tracking time
+   END=$(date +%s)
+
+   # Copy new files to UPDATERDIR
+   echo -e "${BLDRED}"
+   echo -e "--------------------------------"
+   echo -e "MOVING ROM & IMAGES TO UPLOAD DIRECTORY"
+   echo -e "--------------------------------"
+   echo -e "${RST}"
+
+   if [ "$(find "${OUTDIR}"/lineage-"${VERSION}"."${SUBVERSION}"-*-*-"${DEVICE}".zip 2>/dev/null | wc -l)" != "0" ]
+   then
+      mv "${OUTDIR}"/lineage-"${VERSION}"."${SUBVERSION}"-*-*-"${DEVICE}".zip "${UPDATERDIR}/"
+   fi
+
+   # Move boot image
+   if [ "${DEVICE}" == "nash" ] || [ "${DEVICE}" == "river" ] || [ "${DEVICE}" == "lake" ] || [ "${DEVICE}" == "sargo" ] || [ "${DEVICE}" == "bonito" ] || [ "${DEVICE}" == "flame" ] || [ "${DEVICE}" == "coral" ] || [ "${DEVICE}" == "PL2" ] || [ "${DEVICE}" == "marlin" ] || [ "${DEVICE}" == "sailfish" ] || [ "${DEVICE}" == "mata" ] || [ "${DEVICE}" == "pro1" ]|| [ "${DEVICE}" == "payton" ] || [ "${DEVICE}" == "evert" ]|| [ "${DEVICE}" == "chef" ] || [ "${DEVICE}" == "cheryl" ] || [ "${DEVICE}" == "beckham" ] || [ "${DEVICE}" == "aura" ]
+   then
+     mv "${OUTDIR}"/boot.img "${UPDATERDIR}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-recovery-${DEVICE}.img"
+   elif [ "$(find "${OUTDIR}"/boot.img 2>/dev/null | wc -l)" != "0" ]
+   then
+      mv "${OUTDIR}"/boot.img "${UPDATERDIR}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-boot-${DEVICE}.img"
+   fi
+
+   # Move recovery image
+   if [ "$(find "${OUTDIR}"/recovery.img 2>/dev/null | wc -l)" != "0" ]
+   then
+      mv "${OUTDIR}"/recovery.img "${UPDATERDIR}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-recovery-${DEVICE}.img"
+   fi
+
+   # Move vendor image
+   if [ "$(find "${OUTDIR}"/vendor.img 2>/dev/null | wc -l)" != "0" ]
+   then
+      mv "${OUTDIR}"/vendor.img "${UPDATERDIR}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-vendor-${DEVICE}.img"
+   fi
+
+   # Move GSI image if applicable
+   if [ "$(find "${OUT_DIR_COMMON_BASE}"/lineage-"${VERSION}"/target/product/generic_"${DEVICE}"/system.img 2>/dev/null | wc -l)" != "0" ] || [ "$(find "${OUT_DIR_COMMON_BASE}"/lineage-"${VERSION}"/target/product/generic/system.img 2>/dev/null | wc -l)" != "0" ] || [ "$(find "${OUT_DIR_COMMON_BASE}"/lineage-"${VERSION}"/target/product/generic*/system.img 2>/dev/null | wc -l)" != "0" ]
+   then
+      if [ "${DEVICE}" == "arm64" ] || [ "${DEVICE}" == "x86" ] || [ "${DEVICE}" == "x86_64" ]
+      then
+         mv "${OUT_DIR_COMMON_BASE}/lineage-${VERSION}/target/product/generic_${DEVICE}/system.img" "/var/www/ods.ninja/html/BuildServer/Android/lineage/gsi/${DEVICE}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-UNOFFICIAL-${DEVICE}-gsi.img"
+      elif [ "${DEVICE}" == "arm_ab" ] || [ "${DEVICE}" == "arm64_ab" ] || [ "${DEVICE}" == "x86_ab" ] || [ "${DEVICE}" == "x86_64_ab" ]
+      then
+         mv "${OUT_DIR_COMMON_BASE}/lineage-${VERSION}/target/product/generic_${DEVICE}/system.img" "/var/www/ods.ninja/html/BuildServer/Android/lineage/gsi/${DEVICE}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-UNOFFICIAL-${DEVICE}-gsi.img"
+      elif [ "${DEVICE}" == "arm" ]
+      then
+         mv "${OUT_DIR_COMMON_BASE}/lineage-${VERSION}/target/product/generic/system.img" "/var/www/ods.ninja/html/BuildServer/Android/lineage/gsi/${DEVICE}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-UNOFFICIAL-${DEVICE}-gsi.img"
+      elif [ "${DEVICE}" == "tv_arm" ]
+      then
+         mv "${OUT_DIR_COMMON_BASE}/lineage-${VERSION}/target/product/generic/system.img" "/var/www/ods.ninja/html/BuildServer/Android/lineage/gsi/${DEVICE}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-UNOFFICIAL-${DEVICE}-gsi.img"
+      elif [ "${DEVICE}" == "tv_arm64" ]
+      then
+         mv "${OUT_DIR_COMMON_BASE}/lineage-${VERSION}/target/product/generic_arm64/system.img" "/var/www/ods.ninja/html/BuildServer/Android/lineage/gsi/${DEVICE}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-UNOFFICIAL-${DEVICE}-gsi.img"
+      elif [ "${DEVICE}" == "tv_x86" ]
+      then
+         mv "${OUT_DIR_COMMON_BASE}/lineage-${VERSION}/target/product/generic_x86/system.img" "/var/www/ods.ninja/html/BuildServer/Android/lineage/gsi/${DEVICE}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-UNOFFICIAL-${DEVICE}-gsi.img"
+      elif [ "${DEVICE}" == "tv_x86_64" ]
+      then
+         mv "${OUT_DIR_COMMON_BASE}/lineage-${VERSION}/target/product/generic/system.img" "/var/www/ods.ninja/html/BuildServer/Android/lineage/gsi/${DEVICE}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-UNOFFICIAL-${DEVICE}-gsi.img"
+      fi
+   fi
+
+   # Move product image
+   if [ "$(find "${OUTDIR}"/product.img 2>/dev/null | wc -l)" != "0" ]
+   then
+      mv "${OUTDIR}"/product.img "${UPDATERDIR}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-product-${DEVICE}.img"
+   fi
+
+   # Move dtb image
+   if [ "$(find "${OUTDIR}"/dtb.img 2>/dev/null | wc -l)" != "0" ]
+   then
+      mv "${OUTDIR}"/dtb.img "${UPDATERDIR}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-dtb-${DEVICE}.img"
+   fi
+
+   # Move dtbo image
+   if [ "$(find "${OUTDIR}"/dtbo.img 2>/dev/null | wc -l)" != "0" ]
+   then
+      mv "${OUTDIR}"/dtbo.img "${UPDATERDIR}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-dtbo-${DEVICE}.img"
+   fi
+
+   # Clobber if this is the last build of this ROM for this sequence
+   if [ "${LAST_BUILD}" == true ]
+     then
+       mka clobber
+   fi
+
+   # Go back home
+   echo -e "${BLDRED}"
+   echo -e "----------"
+   echo -e "CHANGING DIRECTORY TO HOME"
+   echo -e "----------"
+   echo -e "${RST}"
+
+   cd "${HOME}" || exit
+
+if [ "${DEVICE}" != "arm" ] && [ "${DEVICE}" != "arm64" ] && [ "${DEVICE}" != "x86" ] && [ "${DEVICE}" != "x86_64" ] && [ "${DEVICE}" != "tv_arm" ] && [ "${DEVICE}" != "tv_arm64" ] && [ "${DEVICE}" != "tv_x86" ] && [ "${DEVICE}" != "tv_x86_64" ] && [ "${DEVICE}" != "arm_ab" ] && [ "${DEVICE}" != "arm64_ab" ] && [ "${DEVICE}" != "x86_ab" ] && [ "${DEVICE}" != "x86_64_ab" ]
+then
+   # Go back home
+   echo -e "${BLDRED}"
+   echo -e "----------"
+   echo -e "INDEXING BUILDS"
+   echo -e "----------"
+   echo -e "${RST}"
+
+   /usr/bin/python3 /var/www/builds_publisher/publish_builds.py /var/www/builds_publisher/personal_config.json
+   sudo /bin/systemctl restart updater.service # Restart updater service
+fi
+
+# If the build failed, add a variable
+else
+   BUILD_RESULT_STRING="BUILD FAILED"
+   # Stop tracking time
+   END=$(date +%s)
+fi
+
+
+# Close up shop
+echo -e "${BLDRED}"
+echo -e "-------------------------------------"
+echo -e "SCRIPT ENDING AT $(date +%D\ %r)"
+echo -e ""
+echo -e "${BUILD_RESULT_STRING} FOR ${DEVICE}!"
+echo -e "TIME: $(echo $((END-START)) | awk '{print int($1/60)" MINUTES AND "int($1%60)" SECONDS"}')"
+echo -e "-------------------------------------"
+echo -e "${RST}"
+
+# Add line to compile log
+echo -e "$(date +%H:%M:%S): ${PERSON}" >> "${COMPILE_LOG}"
+
+echo -e "${ROM} for ${DEVICE} ${BUILD_RESULT_STRING} IN $(echo $((END-START)) | awk '{print int($1/60)" MINUTES AND "int($1%60)" SECONDS"}')\n" >> "${COMPILE_LOG}"
+
+echo -e "\a"

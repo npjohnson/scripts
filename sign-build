@@ -1,0 +1,2 @@
+${HOME}/lineage/build/tools/releasetools/sign_target_files_apks -o -d ${HOME}/lineage/vendor/certs *-target_files-*.zip target_files-signed.zip
+${HOME}/lineage/build/tools/releasetools/ota_from_target_files -k ${HOME}/lineage/vendor/certs/releasekey --block --backup=true target_files-signed.zip lineage-${LINEAGE_VERSION}.zip 

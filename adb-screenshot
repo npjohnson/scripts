@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+
+SERIAL=$$
+
+echo $SERIAL
+
+adb -s "$""${1}" shell screencap -p > ~/Pictures/"ADB Screenshot from $(date +'%Y-%m-%d %H-%I-%S').png"

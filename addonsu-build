@@ -1,0 +1,112 @@
+#!/bin/bash
+#
+# Arguements
+# 1: Lineage Version - Supported: 13, 14, 15, 16
+#
+
+VERSION=${1}
+
+# Set the subversion respective to the chose version
+if [ "${VERSION}" == "14" ] || [ "${VERSION}" == "15" ]
+then
+  export SUBVERSION="1"
+elif [ "${VERSION}" == "13" ] || [ "${VERSION}" == "16" ]
+then
+  export SUBVERSION="0"
+fi
+
+# To replace for personal usage:
+PATH_TO_LINEAGE_DIRS=${HOME}
+OUTPUT_DIR=/var/www/ods.ninja/html/BuildServer/Android/lineage/addons/addonsu/${VERSION}.${SUBVERSION}
+PATH_TO_RELEASEKEY=${HOME}/lineage-${VERSION}/vendor/certs/releasekey
+
+# sign_zip.jar which calls sign_apk at some point hardcodes $OUT to out/,
+# so we have to unset this, as other directories are not supported.
+unset OUT_DIR_COMMON_BASE
+
+# Change to the chosen source directory
+cd "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}" || exit
+
+# Setup the build enviorment
+source "build/envsetup.sh"
+
+# Before Lineage 15.1, we used aosp_* targets to build AddonSU, and we always build AddonSU as -eng buildtype because it it SU
+if [ "${VERSION}" == "13" ] || [ "${VERSION}" == "14" ]
+then
+  lunch aosp_arm-eng && mka addonsu addonsu-remove && lunch aosp_arm64-eng && mka addonsu addonsu-remove && lunch aosp_x86-eng && mka addonsu addonsu-remove
+  if [ "${VERSION}" == "13" ] || [ "${VERSION}" == "14" ]
+  then
+    # Random working build target for 13.0 & 14.1, as otatools isn't buildable for aosp_* targets
+    breakfast shieldtablet && mka otatools
+  fi
+
+elif [ "${VERSION}" == "15" ] ||[ "${VERSION}" == "16" ]
+then
+  # Build using our lineage_* generic targetss
+  lunch lineage_arm-eng && mka addonsu addonsu-remove otatools && lunch lineage_arm64-eng && mka addonsu addonsu-remove && lunch lineage_x86-eng && mka addonsu addonsu-remove
+
+elif [ "${VERSION}" == "16" ] || [ "${VERSION}" == "17" ]
+then
+  # Lineage 16.0 supports x86_64 targets, whereas older versions don't
+  lunch lineage_x86_64-eng && mka addonsu addonsu-remove
+fi
+
+# Move AddonSU zips to your desired directory
+mv "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/out/target/product/*/addonsu-*.zip "${OUTPUT_DIR}"/
+
+# LineageOS 13 and 14 don't name the output zips right, so handle that
+if [ "${VERSION}" == "13" ] || [ "${VERSION}" == "14" ]
+then
+  mv "${OUTPUT_DIR}"/addonsu-.-arm.zip "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm.zip
+  mv "${OUTPUT_DIR}"/addonsu-.-arm64.zip "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm64.zip
+  mv "${OUTPUT_DIR}"/addonsu-.-x86.zip "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-x86.zip
+  mv "${OUTPUT_DIR}"/addonsu-remove-.-arm.zip "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm.zip
+  mv "${OUTPUT_DIR}"/addonsu-remove-.-arm64.zip "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm64.zip
+  mv "${OUTPUT_DIR}"/addonsu-remove-.-x86.zip "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-x86.zip
+fi
+
+# Sign the zips using your personal releasekey using the script within the build/make symlink
+if [ "${VERSION}" == "15" ] ||[ "${VERSION}" == "16" ] || [ "${VERSION}" == "17" ]
+then
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/make/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm.zip "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm-signed.zip
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/make/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm.zip "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm-signed.zip
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/make/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm64.zip "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm64-signed.zip
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/make/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm64.zip "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm64-signed.zip
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/make/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-x86.zip "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-x86-signed.zip
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/make/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-x86.zip "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-x86-signed.zip
+  if [ "${VERSION}" == "16" ]
+  then
+    python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/make/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-x86_64.zip "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-x86_64-signed.zip
+    python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/make/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-x86_64.zip "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-x86_64-signed.zip
+  fi
+
+else
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm.zip "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm-signed.zip
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm.zip "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm-signed.zip
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm64.zip "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm64-signed.zip
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm64.zip "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm64-signed.zip
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-x86.zip "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-x86-signed.zip
+  python "${PATH_TO_LINEAGE_DIRS}"/lineage-"${VERSION}"/build/tools/releasetools/sign_zip.py -k "${PATH_TO_RELEASEKEY}" "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-x86.zip "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-x86-signed.zip
+fi
+
+# Clean the output directory
+mka clobber
+
+# Remove the unsigned version of the zips
+rm "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm.zip
+rm "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm.zip
+rm "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-arm64.zip
+rm "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-arm64.zip
+rm "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-x86.zip
+rm "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-x86.zip
+
+if [ "${VERSION}" == "16" ]
+then
+  rm "${OUTPUT_DIR}"/addonsu-"${VERSION}".${SUBVERSION}-x86_64.zip
+  rm "${OUTPUT_DIR}"/addonsu-remove-"${VERSION}".${SUBVERSION}-x86_64.zip
+fi
+
+# Reset OUT_DIR_COMMON_BASE to your preference
+source "/home/nolenjohnson/.bashrc"
+
+echo "LineageOS addon-su built for all platforms successfully!"

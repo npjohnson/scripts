@@ -1,0 +1,35 @@
+#!/bin/bash
+
+PICK=${1}
+
+cd "${HOME}"/lineage-17/ || exit
+repo sync --force-sync
+if [ "${PICK}" == "pick" ]
+  then
+    source "build/envsetup.sh"
+    bash "pick.sh"
+fi
+
+cd "${HOME}"/lineage-16/ || exit
+repo sync --force-sync
+if [ "${PICK}" == "pick" ]
+  then
+    source "build/envsetup.sh"
+    bash "pick.sh"
+fi
+
+cd "${HOME}"/lineage-15/ || exit
+repo sync --force-sync
+if [ "${PICK}" == "pick" ]
+  then
+    source "build/envsetup.sh"
+    bash "pick.sh"
+fi
+
+cd "${HOME}"/lineage-18/ || exit
+repo sync --force-sync
+if [ "${PICK}" == "pick" ]
+  then
+    source "build/envsetup.sh"
+    bash "pick.sh"
+fi
