@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+
+alias gerrit="ssh -p 29418 njohnson@review.lineageos.org gerrit"
+
+for change in $(gerrit query $1 | grep "change" | cut -d ' ' -f 2);
+    do gerrit review $change --abandon;
+done
+
+for change in $(gerrit query --current-patch-set status:open project:LineageOS/android_device_nvidia_tegra-common | grep "revision" | tr -s ' ' | cut -d ' ' -f 3);
+    do gerrit review $change --abandon;
+done

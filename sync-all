@@ -2,6 +2,14 @@
 
 PICK=${1}
 
+cd "${HOME}"/lineage-18/ || exit
+repo sync --force-sync
+if [ "${PICK}" == "pick" ]
+  then
+    source "build/envsetup.sh"
+    bash "pick.sh"
+fi
+
 cd "${HOME}"/lineage-17/ || exit
 repo sync --force-sync
 if [ "${PICK}" == "pick" ]
@@ -18,15 +26,7 @@ if [ "${PICK}" == "pick" ]
     bash "pick.sh"
 fi
 
-cd "${HOME}"/lineage-15/ || exit
-repo sync --force-sync
-if [ "${PICK}" == "pick" ]
-  then
-    source "build/envsetup.sh"
-    bash "pick.sh"
-fi
-
-cd "${HOME}"/lineage-18/ || exit
+cd "${HOME}"/lineage-14/ || exit
 repo sync --force-sync
 if [ "${PICK}" == "pick" ]
   then

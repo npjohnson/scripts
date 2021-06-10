@@ -48,7 +48,7 @@ if [ "${VERSION}" -le "13" ]
 fi
 
 # Copy manifests/picklists
-for version in 15 16 17 18
+for version in 14 16 17 18
 do
   cp ~/lineage-"${version}"/pick-"${version}".sh /var/www/ods.ninja/html/BuildServer/Android/lineage/manifests/pick-"${version}".sh
   cp ~/lineage-"${version}"/.repo/local_manifests/npjohnson-"${version}".xml /var/www/ods.ninja/html/BuildServer/Android/lineage/manifests/npjohnson-"${version}".xml
@@ -185,7 +185,7 @@ then
    fi
 
    # Move boot image
-   if [ "${DEVICE}" == "nash" ] || [ "${DEVICE}" == "river" ] || [ "${DEVICE}" == "lake" ] || [ "${DEVICE}" == "sargo" ] || [ "${DEVICE}" == "bonito" ] || [ "${DEVICE}" == "flame" ] || [ "${DEVICE}" == "coral" ] || [ "${DEVICE}" == "PL2" ] || [ "${DEVICE}" == "marlin" ] || [ "${DEVICE}" == "sailfish" ] || [ "${DEVICE}" == "mata" ] || [ "${DEVICE}" == "pro1" ]|| [ "${DEVICE}" == "payton" ] || [ "${DEVICE}" == "evert" ]|| [ "${DEVICE}" == "chef" ] || [ "${DEVICE}" == "cheryl" ] || [ "${DEVICE}" == "beckham" ] || [ "${DEVICE}" == "aura" ]
+   if [ "${DEVICE}" == "nash" ] || [ "${DEVICE}" == "river" ] || [ "${DEVICE}" == "lake" ] || [ "${DEVICE}" == "sargo" ] || [ "${DEVICE}" == "troika" ] || [ "${DEVICE}" == "kane" ] || [ "${DEVICE}" == "bonito" ] || [ "${DEVICE}" == "flame" ] || [ "${DEVICE}" == "coral" ] || [ "${DEVICE}" == "PL2" ] || [ "${DEVICE}" == "marlin" ] || [ "${DEVICE}" == "sailfish" ] || [ "${DEVICE}" == "mata" ] || [ "${DEVICE}" == "pro1" ]|| [ "${DEVICE}" == "payton" ] || [ "${DEVICE}" == "evert" ]|| [ "${DEVICE}" == "chef" ] || [ "${DEVICE}" == "cheryl" ] || [ "${DEVICE}" == "beckham" ] || [ "${DEVICE}" == "aura" ]
    then
      mv "${OUTDIR}"/boot.img "${UPDATERDIR}/lineage-${VERSION}.${SUBVERSION}-$(date +%Y%m%d)-recovery-${DEVICE}.img"
    elif [ "$(find "${OUTDIR}"/boot.img 2>/dev/null | wc -l)" != "0" ]

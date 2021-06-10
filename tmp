@@ -4,34 +4,6 @@
 export WITH_GMS_MINIMAL=false
 export WITH_GMS=true
 
-lineage-build 18 coral sync clean
-
-lineage-upload
-
-lineage-build 18 sargo
-
-lineage-upload
-
-lineage-build 18 aura
-
-lineage-upload
-
-lineage-build 18 TP1803
-
-lineage-upload
-
-lineage-build 18 cheryl nosync clean
-
-lineage-upload
-
-lineage-build 18 pro1
-
-lineage-upload
-
-lineage-build 18 nash
-
-lineage-upload
-
 lineage-build 18 mata
 
 lineage-upload
@@ -106,34 +78,6 @@ LAST_BUILD=true lineage-build 18 arm64 nosync clean
 
 lineage-upload
 
-export WITH_GMS=false
-LAST_BUILD=true lineage-build 17 foster sync clean
-
-lineage-upload
-export WITH_GMS=true
-
-lineage-build 16 yellowstone sync clean
-
-lineage-upload
-
-lineage-build 16 berkeley
-
-lineage-upload
-
-export WITH_GMS=false
-lineage-build 16 shieldtablet
-
-lineage-upload
-
-LAST_BUILD=true lineage-build 16 fugu
-
-lineage-upload
-export WITH_GMS=true
-
-#LAST_BUILD=true lineage-build 15 fugu sync clean
-
-#lineage-upload
-
 lineage-build 18 flame sync clean
 lineage-build 18 bonito
 lineage-build 18 payton nosync clean
@@ -181,8 +125,6 @@ lineage-build 18 tv_arm
 lineage-build 18 tv_arm64
 lineage-build 18 tv_x86
 LAST_BUILD=true lineage-build 18 tv_x86_64
-
-LAST_BUILD=true lineage-build 16 charlotte
 
 lineage-upload
 
